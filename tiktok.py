@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-TikTok Account Downloader (Auto Setup)
---------------------------------------
+TikTok Account Downloader (Auto Setup, Clean Output)
+----------------------------------------------------
 ✅ Downloads all TikTok videos from any public account.
 ✅ Works in Termux, Pydroid3, or Desktop.
 ✅ Automatically installs missing dependencies.
 ✅ Saves videos to /storage/emulated/0/TecHelp/
+✅ Clean progress bar (no warnings)
 """
 
 import os, sys, subprocess, importlib
@@ -104,14 +105,19 @@ def download_user_videos(username: str, count: Optional[int] = None,
     ydl_opts = {
         "outtmpl": os.path.join(out_dir, "%(upload_date)s_%(id)s.%(ext)s"),
         "format": "best",
-        "noprogress": True,
         "quiet": True,
         "ignoreerrors": True,
+        "no_warnings": True,
+        "progress": True,
+        "noprogress": False,
+        "progress_with_newline": True,
+        "progress_template": "Downloading %(info.id)s: %(progress._percent_str)s |%(progress.bar)s| %(progress._eta_str)s",
         "concurrent_fragment_downloads": 4,
+        "writeinfojson": False,
         "writesubtitles": False,
-        "writeinfojson": True,
-        "download_archive": os.path.join(out_dir, "downloaded.txt"),
+        "merge_output_format": "mp4",
     }
+
     if ydl_extra_opts:
         ydl_opts.update(ydl_extra_opts)
 
@@ -119,10 +125,10 @@ def download_user_videos(username: str, count: Optional[int] = None,
         for url in tqdm(to_download, desc=f"Downloading @{username}", unit="video"):
             try:
                 ydl.download([url])
-            except DownloadError as de:
-                print(f"\n⚠️ Download error for {url}: {de}")
-            except Exception as e:
-                print(f"\n⚠️ Unexpected error for {url}: {e}")
+            except DownloadError:
+                continue
+            except Exception:
+                continue
 
     print(f"\n✅ Done! Videos saved in: {out_dir}")
 
